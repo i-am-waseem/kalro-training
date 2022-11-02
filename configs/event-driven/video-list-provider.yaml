@@ -1,0 +1,49 @@
+version: '3'
+services:
+
+  # The core platform, mounts docker control socket and route definition into the image
+  provider-core:
+    image: farmstack/trusted-connector
+    tty: true
+    stdin_open: true
+    volumes:
+      - ../logs/provider/:/root/log/
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../cert-store/provider-keystore.p12:/root/etc/provider-keystore.p12
+      - ../cert-store/truststore.p12:/root/etc/truststore.p12
+      - ../etc/settings.mapdb:/root/etc/settings.mapdb
+      - ../deploy/allow-all-flows.pl:/root/deploy/allow-all-flows.pl
+      - ./provider.xml:/root/deploy/provider.xml
+    
+    # Uncomment to run the provider & consumer nodes on separate server 
+    # replace x.x.x.x with the consumer ip address
+    extra_hosts:
+     - "consumer-core:34.136.125.81"
+
+    ports:
+      - 8989:8989
+      # - 29292:29292
+      # - 29293:29293
+      # - 29294:29294
+    
+    # Using two networks ids-wide and provider-internal for external comunication and internal communication respectively
+    networks:
+      - ids-wide
+      - provider-internal
+
+  video-list-app-fao:
+    image: farmstack/video-list-app-fao:restapi
+    env_file:
+      - ../../video-list-app/.env
+    # volumes:
+    #   - ../../video-list-app/routes/video-list.js:/app/routes/video-list.js
+    ports:
+      - "3002:3002"
+    networks:
+      - provider-internal
+
+networks:
+  ids-wide:
+    driver: bridge
+  provider-internal:
+    driver: bridge
