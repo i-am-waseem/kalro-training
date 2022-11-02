@@ -2,8 +2,8 @@ version: '3'
 services:
 
   # The core platform, mounts docker control socket and route definition into the image
-  location-provider-core:
-    image: farmstack/trusted-connector:${EXAMPLE_TAG:-latest}
+  provider-core:
+    image: farmstack/trusted-connector:1.0.0
     tty: true
     stdin_open: true
     volumes:
@@ -15,11 +15,6 @@ services:
       - ./etc/settings.mapdb:/root/etc/settings.mapdb
       - ./deploy/allow-all-flows.pl:/root/deploy/allow-all-flows.pl
 
-    # Uncomment to run the provider & consumer nodes on separate server
-    # replace x.x.x.x with the consumer ip address
-    extra_hosts:
-      - "consumer-core:13.59.74.187"
-
     ports:
       - 8989:8989
 
@@ -30,39 +25,9 @@ services:
           - provider-core
       location-provider-internal:
 
-  location-consumer-core:
-    image: farmstack/trusted-connector:${EXAMPLE_TAG:-latest}
-    tty: true
-    stdin_open: true
-    volumes:
-      - ./logs/consumer/:/root/log/
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./cert-store/consumer-keystore.p12:/root/etc/consumer-keystore.p12
-      - ./cert-store/truststore.p12:/root/etc/truststore.p12
-      - ./video-list-response-routes.xml:/root/deploy/video-list-response-routes.xml
-      - ./etc/settings3.mapdb:/root/etc/settings.mapdb
-      - ./deploy/allow-all-flows.pl:/root/deploy/allow-all-flows.pl
 
-    # Uncomment to run the provider & consumer nodes on separate server
-    # replace x.x.x.x with the provider ip address
-    extra_hosts:
-      - "provider-core:13.59.74.187"
-
-    # Enable this port mappings for debugging or UI access from localhost
-    ports:
-    # Enable this port mapping (along with "ports:" above) to allow access to IDSCP from outside the ids-wide network
-      - "8000:8000"
-    # Using two networks ids-wide and consumer-internal for external comunication and internal communication, respectively
-    networks:
-      ids-wide2:
-        aliases:
-          - consumer-core
-      location-consumer-internal:
-
-  location-app-fao:
+  provider-app:
     image: farmstack/location-app-fao:restapi
-    env_file:
-      - ../location-app/.env
     ports:
       - 3001:3001
     networks:
